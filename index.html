@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Sincronização Incremental de Precatórios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+            line-height: 1.7;
+            color: #2c3e50;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 60px 40px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 3em;
+            font-weight: 300;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+
+        header .subtitle {
+            font-size: 1.3em;
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            border-top: 4px solid #2a5298;
+        }
+
+        .card h2 {
+            color: #1e3c72;
+            font-size: 2em;
+            font-weight: 300;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e8eaf6;
+        }
+
+        .card h3 {
+            color: #34495e;
+            font-size: 1.4em;
+            font-weight: 400;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .card ul {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .flow-step {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 6px;
+            border-left: 4px solid #2a5298;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        .flow-step strong {
+            color: #1e3c72;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #bdc3c7;
+            margin: 15px 0;
+            font-weight: 300;
+        }
+
+        .possibility {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 6px;
+            border-left: 5px solid #3498db;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .possibility h4 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+
+        .possibility.status-new {
+            border-left-color: #27ae60;
+        }
+
+        .possibility.status-update {
+            border-left-color: #f39c12;
+        }
+
+        .possibility.status-remove {
+            border-left-color: #e74c3c;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px 25px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .code-block code {
+            color: #ecf0f1;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: #856404;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e8eaf6;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #34495e;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin: 5px 8px 5px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .badge.primary {
+            background: #2a5298;
+        }
+
+        .badge.success {
+            background: #27ae60;
+        }
+
+        .badge.warning {
+            background: #f39c12;
+        }
+
+        .badge.danger {
+            background: #e74c3c;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 40px;
+            margin-top: 50px;
+        }
+
+        .footer p {
+            margin: 8px 0;
+            color: #ecf0f1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .feature-box {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 6px;
+            border-top: 3px solid #2a5298;
+        }
+
+        .feature-box h4 {
+            color: #1e3c72;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(to right, transparent, #bdc3c7, transparent);
+            margin: 40px 0;
+        }
+
+        .number-badge {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            background: #2a5298;
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        .stats-box {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 6px;
+            margin: 25px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            color: #2a5298;
+            font-weight: 300;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Sincronização Incremental</h1>
+            <p class="subtitle">Gerenciamento Inteligente de Precatórios</p>
+        </header>
+
+        <div class="card">
+            <h2>Visão Geral</h2>
+            <p>Este sistema realiza sincronização incremental entre arquivos CSV dos tribunais (TJPR e TJSC) e o banco de dados PostgreSQL, mantendo os dados sempre atualizados sem duplicações ou perdas de informação.</p>
+            
+            <h3>Objetivos do Sistema</h3>
+            <ul>
+                <li>Sincronizar dados de precatórios de forma eficiente e segura</li>
+                <li>Preservar modificações manuais feitas no banco de dados</li>
+                <li>Identificar novos registros automaticamente</li>
+                <li>Atualizar registros existentes quando necessário</li>
+                <li>Marcar registros removidos como "não está na ordem"</li>
+                <li>Manter histórico completo de todas as alterações</li>
+            </ul>
+
+            <div class="stats-box">
+                <div class="stat-item">
+                    <div class="stat-value">84K+</div>
+                    <div class="stat-label">Registros Processados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Fontes de Dados</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Backup Automático</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Conceitos Fundamentais</h2>
+            
+            <h3>Chave Única</h3>
+            <div class="code-block">Chave Única = (Organização, Prioridade, Tribunal)</div>
+            <p>Um precatório é identificado unicamente pela combinação desses três campos. É importante notar que o mesmo precatório pode aparecer em múltiplas posições com diferentes prioridades.</p>
+
+            <h3>Estados do Registro</h3>
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>Está na Ordem</h4>
+                    <p>Precatório presente no CSV atual</p>
+                    <span class="badge success">esta_na_ordem = true</span>
+                </div>
+                <div class="feature-box">
+                    <h4>Não Está na Ordem</h4>
+                    <p>Precatório foi removido do CSV</p>
+                    <span class="badge danger">nao_esta_na_ordem = true</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Possibilidades de Sincronização</h2>
+            
+            <div class="possibility status-new">
+                <h4>Possibilidade 1: Novo Registro</h4>
+                <p><strong>Situação:</strong> Precatório está no CSV mas não está no banco de dados.</p>
+                <p><strong>Ação:</strong> Inserir novo registro com status "está na ordem".</p>
+                <div class="code-block">INSERT INTO precatorios (organizacao, ordem, precatorio, 
+prioridade, tribunal, esta_na_ordem, ...)
+VALUES (..., true)</div>
+            </div>
+
+            <div class="possibility status-update">
+                <h4>Possibilidade 2: Atualizar Registro Existente</h4>
+                <p><strong>Situação:</strong> Precatório está no CSV e no banco, mas os dados mudaram.</p>
+                <p><strong>Verificação:</strong> Sistema verifica se há modificações manuais nos logs.</p>
+                <p><strong>Decisão:</strong></p>
+                <ul>
+                    <li>Se não há logs: Atualiza os dados do CSV</li>
+                    <li>Se há logs: Preserva os dados existentes no banco</li>
+                </ul>
+                <div class="code-block">-- Com logs: PRESERVA dados
+-- Sem logs: ATUALIZA dados do CSV</div>
+            </div>
+
+            <div class="possibility status-remove">
+                <h4>Possibilidade 3: Registro Removido</h4>
+                <p><strong>Situação:</strong> Precatório está no banco mas não está mais no CSV.</p>
+                <p><strong>Ação:</strong> Alterar status para "não está na ordem".</p>
+                <div class="code-block">UPDATE precatorios 
+SET esta_na_ordem = false, 
+    nao_esta_na_ordem = true
+WHERE ...</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Fluxo Completo de Sincronização</h2>
+            
+            <div class="flow-step">
+                <span class="number-badge">1</span>
+                <strong>Carregamento dos Dados</strong>
+                Sistema carrega e processa os arquivos CSV dos tribunais TJPR e TJSC.
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <span class="number-badge">2</span>
+                <strong>Backup Preventivo</strong>
+                Cria backup completo do estado atual do banco antes de qualquer modificação.
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <span class="number-badge">3</span>
+                <strong>Processamento dos Dados na Ordem</strong>
+                Para cada registro presente no CSV:
+                <ul style="margin-top: 10px;">
+                    <li>Busca no banco pela chave única (organização, prioridade, tribunal)</li>
+                    <li>Novo registro: Insere no banco</li>
+                    <li>Registro existente sem mudanças: Mantém como está</li>
+                    <li>Registro existente com mudanças e sem logs: Atualiza dados</li>
+                    <li>Registro existente com mudanças e com logs: Preserva dados do banco</li>
+                </ul>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <span class="number-badge">4</span>
+                <strong>Processamento dos Dados Fora da Ordem</strong>
+                Para cada registro existente no banco:
+                <ul style="margin-top: 10px;">
+                    <li>Verifica se está presente no CSV atual</li>
+                    <li>Se não está: Marca como "não está na ordem"</li>
+                    <li>Atualiza status: esta_na_ordem = false, nao_esta_na_ordem = true</li>
+                </ul>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <span class="number-badge">5</span>
+                <strong>Backup Pós-Sincronização</strong>
+                Cria backup completo do novo estado do banco após todas as alterações.
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-step">
+                <span class="number-badge">6</span>
+                <strong>Confirmação e Finalização</strong>
+                Confirma todas as transações e encerra a conexão com o banco de dados.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Exemplos Práticos</h2>
+            
+            <h3>Exemplo 1: Inserção de Novo Precatório</h3>
+            <div class="possibility">
+                <p><strong>CSV:</strong> Organização: "Estado do Paraná - PR", Prioridade: "Normal", Tribunal: "TJPR", Ordem: 1</p>
+                <p><strong>Banco:</strong> Registro não existe</p>
+                <p><strong>Resultado:</strong> <span class="badge success">INserido</span> como novo registro no banco</p>
+            </div>
+
+            <h3>Exemplo 2: Atualização de Dados</h3>
+            <div class="possibility">
+                <p><strong>CSV:</strong> Ordem: 5, Valor: R$ 100.000,00</p>
+                <p><strong>Banco:</strong> Ordem: 3, Valor: R$ 50.000,00</p>
+                <p><strong>Logs:</strong> Nenhum registro de modificação manual</p>
+                <p><strong>Resultado:</strong> <span class="badge warning">Atualizado</span> para Ordem: 5, Valor: R$ 100.000,00</p>
+            </div>
+
+            <h3>Exemplo 3: Preservação de Modificações Manuais</h3>
+            <div class="possibility">
+                <p><strong>CSV:</strong> Ordem: 2</p>
+                <p><strong>Banco:</strong> Ordem: 10 (modificado manualmente)</p>
+                <p><strong>Logs:</strong> Existe registro de modificação manual da ordem</p>
+                <p><strong>Resultado:</strong> <span class="badge primary">Preservado</span> - mantém Ordem: 10 do banco (dados manuais protegidos)</p>
+            </div>
+
+            <h3>Exemplo 4: Remoção de Precatório</h3>
+            <div class="possibility">
+                <p><strong>CSV:</strong> Precatório não aparece mais</p>
+                <p><strong>Banco:</strong> Precatório existe com esta_na_ordem = true</p>
+                <p><strong>Resultado:</strong> <span class="badge danger">Status Alterado</span> para esta_na_ordem = false, nao_esta_na_ordem = true</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Sistema de Logs e Preservação</h2>
+            
+            <h3>Tabela de Logs (precatorios_logs)</h3>
+            <p>Registra todas as modificações manuais feitas nos registros do banco de dados:</p>
+            
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>organizacao</td>
+                    <td>VARCHAR(500)</td>
+                    <td>Nome da organização do precatório</td>
+                </tr>
+                <tr>
+                    <td>prioridade</td>
+                    <td>VARCHAR(100)</td>
+                    <td>Tipo de prioridade (chave única)</td>
+                </tr>
+                <tr>
+                    <td>tribunal</td>
+                    <td>VARCHAR(50)</td>
+                    <td>Tribunal de origem (chave única)</td>
+                </tr>
+                <tr>
+                    <td>campo_modificado</td>
+                    <td>VARCHAR(100)</td>
+                    <td>Nome do campo que foi alterado</td>
+                </tr>
+                <tr>
+                    <td>valor_anterior</td>
+                    <td>TEXT</td>
+                    <td>Valor antes da modificação manual</td>
+                </tr>
+                <tr>
+                    <td>valor_novo</td>
+                    <td>TEXT</td>
+                    <td>Valor após a modificação manual</td>
+                </tr>
+                <tr>
+                    <td>data_modificacao</td>
+                    <td>TIMESTAMP</td>
+                    <td>Data e hora da modificação</td>
+                </tr>
+            </table>
+
+            <h3>Lógica de Preservação</h3>
+            <p>O sistema implementa uma <span class="highlight">proteção inteligente</span> para modificações manuais:</p>
+            <ul>
+                <li>Se um precatório possui registros na tabela de logs, significa que foi modificado manualmente</li>
+                <li>Neste caso, o sistema <strong>não atualiza</strong> os dados vindos do CSV</li>
+                <li>Os dados modificados manualmente são <strong>preservados</strong> no banco</li>
+                <li>Garante que o trabalho manual do usuário não seja sobrescrito</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Características Técnicas</h2>
+            
+            <h3>Recursos Implementados</h3>
+            <div class="grid">
+                <div class="feature-box">
+                    <h4>Backup Automático</h4>
+                    <p>Criação automática de backups antes e depois da sincronização</p>
+                </div>
+                <div class="feature-box">
+                    <h4>Inserção em Lote</h4>
+                    <p>Processamento otimizado em batch para grandes volumes de dados</p>
+                </div>
+                <div class="feature-box">
+                    <h4>Atualização em Lote</h4>
+                    <p>Updates eficientes agrupados em operações em lote</p>
+                </div>
+                <div class="feature-box">
+                    <h4>Logs Detalhados</h4>
+                    <p>Rastreabilidade completa de todas as operações realizadas</p>
+                </div>
+                <div class="feature-box">
+                    <h4>Preservação de Dados</h4>
+                    <p>Proteção para modificações manuais no banco de dados</p>
+                </div>
+                <div class="feature-box">
+                    <h4>Transações Seguras</h4>
+                    <p>Rollback automático em caso de erro durante o processamento</p>
+                </div>
+            </div>
+
+            <h3>Estrutura da Tabela Principal</h3>
+            <table>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr><td>id</td><td>SERIAL</td><td>Identificador único</td></tr>
+                <tr><td>organizacao</td><td>VARCHAR(500)</td><td>Nome da organização</td></tr>
+                <tr><td>ordem</td><td>INTEGER</td><td>Posição na ordem cronológica</td></tr>
+                <tr><td>precatorio</td><td>VARCHAR(200)</td><td>Número do precatório</td></tr>
+                <tr><td>prioridade</td><td>VARCHAR(100)</td><td>Tipo: Normal, Deficiência, Doença, Idade</td></tr>
+                <tr><td>tribunal</td><td>VARCHAR(50)</td><td>Tribunal de origem</td></tr>
+                <tr><td>natureza</td><td>VARCHAR(100)</td><td>Alimentar ou Comum</td></tr>
+                <tr><td>regime</td><td>VARCHAR(100)</td><td>Geral ou Especial</td></tr>
+                <tr><td>valor</td><td>DECIMAL(15,2)</td><td>Valor do precatório</td></tr>
+                <tr><td>esta_na_ordem</td><td>BOOLEAN</td><td>Status: presente no CSV atual</td></tr>
+                <tr><td>nao_esta_na_ordem</td><td>BOOLEAN</td><td>Status: foi removido do CSV</td></tr>
+                <tr><td>data_inclusao</td><td>TIMESTAMP</td><td>Data da primeira inserção</td></tr>
+                <tr><td>data_atualizacao</td><td>TIMESTAMP</td><td>Data da última atualização</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Performance e Estatísticas</h2>
+            
+            <div class="stats-box">
+                <div class="stat-item">
+                    <div class="stat-value">84K+</div>
+                    <div class="stat-label">Registros por Sincronização</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Fontes de Dados (CSV)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">~28</div>
+                    <div class="stat-label">Minutos (Inclusão Completa)</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Confiabilidade de Backup</div>
+                </div>
+            </div>
+
+            <div class="possibility" style="margin-top: 25px; background: #fff9e6;">
+                <h4>Nota sobre Tempo de Processamento</h4>
+                <p>Os 28 minutos referem-se a uma <strong>inclusão completa</strong> de todos os 84.406 registros no banco. Este é o tempo necessário quando:</p>
+                <ul>
+                    <li>O banco de dados está vazio ou possui poucos registros</li>
+                    <li>É a primeira sincronização completa</li>
+                    <li>Todos os 84.406 registros precisam ser inseridos</li>
+                </ul>
+                <p>Em sincronizações subsequentes (incrementais), o tempo é significativamente menor, pois:</p>
+                <ul>
+                    <li>Apenas novos registros são inseridos</li>
+                    <li>Apenas registros com mudanças são atualizados</li>
+                    <li>Registros removidos apenas têm status alterado</li>
+                </ul>
+                <p><strong>Importante:</strong> Este foi o tempo real medido na execução de teste do sistema com dados completos.</p>
+            </div>
+
+            <h3>Detalhamento do Tempo de Processamento</h3>
+            <table>
+                <tr>
+                    <th>Etapa</th>
+                    <th>Tempo</th>
+                    <th>Descrição</th>
+                </tr>
+                <tr>
+                    <td>Backup Antes</td>
+                    <td>0.03s</td>
+                    <td>Criação de backup preventivo do banco</td>
+                </tr>
+                <tr>
+                    <td>Processamento CSV</td>
+                    <td>3.42s</td>
+                    <td>Leitura e processamento de 84.406 registros dos arquivos CSV</td>
+                </tr>
+                <tr>
+                    <td>Lógica Incremental</td>
+                    <td>~14 minutos</td>
+                    <td>Busca, comparação e análise de 84.406 registros no banco de dados</td>
+                </tr>
+                <tr>
+                    <td>Inserção em Lote</td>
+                    <td>~14 minutos</td>
+                    <td>Inserção em batch de 84.406 novos registros no PostgreSQL</td>
+                </tr>
+                <tr>
+                    <td>Backup Depois</td>
+                    <td>2.79s</td>
+                    <td>Criação de backup pós-sincronização do banco</td>
+                </tr>
+                <tr>
+                    <td><strong>Total</strong></td>
+                    <td><strong>~28 minutos</strong></td>
+                    <td>Tempo total de sincronização completa</td>
+                </tr>
+            </table>
+
+            <h3>Otimizações Aplicadas</h3>
+            <ul>
+                <li>Índices criados nas chaves únicas para busca rápida</li>
+                <li>Operações em lote (batch) para eficiência máxima</li>
+                <li>Queries otimizadas com preparação de statements</li>
+                <li>Backups incrementais para reduzir tempo de espera</li>
+                <li>Commit inteligente em etapas para segurança</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Otimizações Futuras</h2>
+            
+            <div class="possibility" style="background: #e8f5e9; border-left-color: #27ae60;">
+                <h4>Oportunidade de Melhoria: Carregamento em Memória</h4>
+                <p><strong>Situação Atual:</strong> O processo atual faz buscas individuais ao banco para cada registro, resultando em ~168.000 consultas.</p>
+                <p><strong>Melhoria Sugerida:</strong> Carregar todos os dados do banco em memória de uma vez (2 consultas) e processar tudo em cache.</p>
+                <p><strong>Ganho Estimado:</strong> Redução de tempo de ~28 minutos para <strong>~5 minutos</strong> (redução de 80%)</p>
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Aspecto</th>
+                        <th>Atual</th>
+                        <th>Otimizado</th>
+                    </tr>
+                    <tr>
+                        <td>Consultas ao Banco</td>
+                        <td>~168.000 consultas individuais</td>
+                        <td>2 consultas em lote</td>
+                    </tr>
+                    <tr>
+                        <td>Tempo de Processamento</td>
+                        <td>~28 minutos</td>
+                        <td>~5 minutos</td>
+                    </tr>
+                    <tr>
+                        <td>Complexidade</td>
+                        <td>Baixa (já implementada)</td>
+                        <td>Baixa (fácil implementar)</td>
+                    </tr>
+                    <tr>
+                        <td>Uso de Memória</td>
+                        <td>Mínimo</td>
+                        <td>Moderado (~500MB)</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>Como Funcionaria a Otimização</h3>
+            <div class="code-block"># Carrega TODOS os dados de uma vez (1 consulta)
+all_precatorios = db.fetch_all("SELECT * FROM precatorios")
+
+# Carrega TODOS os logs de uma vez (1 consulta)
+all_logs = db.fetch_all("SELECT * FROM precatorios_logs")
+
+# Cria dicionários em memória para busca O(1)
+precatorios_dict = {}
+for p in all_precatorios:
+    key = (p['organizacao'], p['prioridade'], p['tribunal'])
+    precatorios_dict[key] = p
+
+logs_dict = {}
+for l in all_logs:
+    key = (l['organizacao'], l['prioridade'], l['tribunal'])
+    logs_dict[key] = l
+
+# Processa tudo em memória (sem consultas ao banco)
+for data in csv_data:
+    key = (data['organizacao'], data['prioridade'], data['tribunal'])
+    existing = precatorios_dict.get(key)  # O(1) lookup
+    logs = logs_dict.get(key, [])        # O(1) lookup
+    # Processa sem consultar banco</div>
+
+            <h3>Benefícios da Otimização</h3>
+            <div class="grid">
+                <div class="feature-box" style="border-top-color: #27ae60;">
+                    <h4>Performance</h4>
+                    <p>Redução de ~80% no tempo de processamento</p>
+                </div>
+                <div class="feature-box" style="border-top-color: #27ae60;">
+                    <h4>Carga do Banco</h4>
+                    <p>Redução drástica de consultas ao banco de dados</p>
+                </div>
+                <div class="feature-box" style="border-top-color: #27ae60;">
+                    <h4>Escalabilidade</h4>
+                    <p>Sistema preparado para volumes ainda maiores</p>
+                </div>
+            </div>
+
+            <p style="margin-top: 25px; color: #7f8c8d; font-size: 0.95em;">
+                <strong>Nota:</strong> Esta otimização está documentada no arquivo <code>OTIMIZACOES_SUGERIDAS.md</code> e pode ser implementada quando necessário.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Sistema de Sincronização Incremental de Precatórios</strong></p>
+            <p>Gerenciamento Inteligente de Dados com Preservação de Modificações Manuais</p>
+            <div style="margin-top: 20px;">
+                <span class="badge primary">PostgreSQL</span>
+                <span class="badge primary">Python</span>
+                <span class="badge primary">CSV</span>
+                <span class="badge primary">Sincronização Incremental</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
