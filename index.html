@@ -398,8 +398,8 @@
             <h2>Conceitos Fundamentais</h2>
             
             <h3>Chave Única</h3>
-            <div class="code-block">Chave Única = (Organização, Prioridade, Tribunal)</div>
-            <p>Um precatório é identificado unicamente pela combinação desses três campos. É importante notar que o mesmo precatório pode aparecer em múltiplas posições com diferentes prioridades.</p>
+            <div class="code-block">Chave Única = (Organização, Tribunal, Ano Orçamentário, Prioridade)</div>
+            <p>Um precatório é identificado unicamente pela combinação desses quatro campos. Esta chave permite diferenciar precatórios parcelados ou com múltiplas prioridades, distribuídos por diferentes anos orçamentários.</p>
 
             <h3>Estados do Registro</h3>
             <div class="grid">
@@ -476,7 +476,7 @@ WHERE ...</div>
                 <strong>Processamento dos Dados na Ordem</strong>
                 Para cada registro presente no CSV:
                 <ul style="margin-top: 10px;">
-                    <li>Busca no banco pela chave única (organização, prioridade, tribunal)</li>
+                    <li>Busca no banco pela chave única (organização, tribunal, ano orçamentário, prioridade)</li>
                     <li>Novo registro: Insere no banco</li>
                     <li>Registro existente sem mudanças: Mantém como está</li>
                     <li>Registro existente com mudanças e sem logs: Atualiza dados</li>
@@ -566,14 +566,19 @@ WHERE ...</div>
                     <td>Nome da organização do precatório</td>
                 </tr>
                 <tr>
-                    <td>prioridade</td>
-                    <td>VARCHAR(100)</td>
-                    <td>Tipo de prioridade (chave única)</td>
-                </tr>
-                <tr>
                     <td>tribunal</td>
                     <td>VARCHAR(50)</td>
                     <td>Tribunal de origem (chave única)</td>
+                </tr>
+                <tr>
+                    <td>ano_orc</td>
+                    <td>INTEGER</td>
+                    <td>Ano orçamentário (chave única)</td>
+                </tr>
+                <tr>
+                    <td>prioridade</td>
+                    <td>VARCHAR(100)</td>
+                    <td>Tipo de prioridade (chave única)</td>
                 </tr>
                 <tr>
                     <td>campo_modificado</td>
